@@ -1,0 +1,15 @@
+name = "glemcached"
+version = "0.1.0"
+description = "A memcached client in pure gleam!"
+licenses = ["MIT"]
+repository = { type = "github", user = "arnu515", repo = "glemcached" }
+internal_modules = [ "glemcached/internal", "glemcached/internal/*", "glemcached/examples/*"]
+
+[dependencies]
+gleam_stdlib = ">= 0.34.0 and < 2.0.0"
+gleam_erlang = ">= 0.28.0 and < 1.0.0"
+gleam_otp = ">= 0.13.0 and < 1.0.0"
+mug = ">= 1.1.1 and < 2.0.0"
+
+[dev-dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
