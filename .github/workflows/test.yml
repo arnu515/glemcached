@@ -9,16 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      memcached:
-        image: memcached:1-alpine
-        ports:
-          - 11211:11211
-      # TODO: Actually add auth
-      memcached-with-auth:
-        image: memcached:1-alpine
-        ports:
-          - 11212:11211
     steps:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
@@ -28,5 +18,30 @@ jobs:
           rebar3-version: "3"
           # elixir-version: "1.15.4"
       - run: gleam deps download
+      - name: Cache Memcached
+        id: cache-memcached
+        uses: actions/cache@v4
+        with:
+          path: memcached
+          key: ${{ runner.os }}-memcached
+
+      - name: Build memcached
+        if: steps.cache-memcached.outputs.cache-hit != 'true'
+        run: |
+          sudo apt install build-essential libevent-dev
+          wget -O memcached.tgz http://memcached.org/latest
+          tar xvzf memcached.tgz
+          mv memcached-1.* memcached-src
+          cd memcached-src
+          ./configure --prefix=out
+          make && make install
+          mv out/bin/memcached ..
+          cd ..
+          rm -r memcached-src
+      - name: Start memcached
+        run: |
+          ./memcached -p 11211 &
+          echo "user:pass" > auth
+          ./memcached -Y auth -p 11212 &
       - run: gleam test
       - run: gleam format --check src test
