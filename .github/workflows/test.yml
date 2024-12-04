@@ -24,11 +24,10 @@ jobs:
         with:
           path: memcached
           key: ${{ runner.os }}-memcached
-
+      - run: sudo apt-get install build-essential libevent-dev
       - name: Build memcached
         if: steps.cache-memcached.outputs.cache-hit != 'true'
         run: |
-          sudo apt-get install build-essential libevent-dev
           wget -O memcached.tgz http://memcached.org/latest
           tar xvzf memcached.tgz
           mv memcached-1.* memcached-src
