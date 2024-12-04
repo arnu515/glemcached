@@ -216,7 +216,6 @@ fn parse_values(
     <<"VALUE ", rest:bits>> ->
       option.unwrap(
         {
-          result.try
           use #(key, rest) <- option.then(pop_until_space_on_same_line(rest))
           use #(flags, rest) <- option.then(pop_until_space_on_same_line(rest))
           // clamped just in case :)
@@ -265,7 +264,6 @@ fn parse_values_cas(
     <<"VALUE ", rest:bits>> ->
       option.unwrap(
         {
-          result.try
           use #(key, rest) <- option.then(pop_until_space_on_same_line(rest))
           use #(flags, rest) <- option.then(pop_until_space_on_same_line(rest))
           // clamped just in case :)
