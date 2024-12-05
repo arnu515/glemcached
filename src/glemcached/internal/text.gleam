@@ -4,14 +4,12 @@
 //// !!!!!!!!
 
 import gleam/bit_array
-import gleam/bytes_builder.{
-  type BytesBuilder, append, from_string_builder as from_sb,
-}
+import gleam/bytes_tree.{type BytesTree, append, from_string_tree as from_st}
 import gleam/int
 import gleam/option
 import gleam/result.{unwrap}
 import gleam/string
-import gleam/string_builder as sb
+import gleam/string_tree as st
 import glemcached/internal/pop_ba.{pop_until_rn, pop_until_space_on_same_line}
 import glemcached/types.{
   type Memcached, type MemcachedError, ClientError, CommandError, GeneralError,
@@ -126,19 +124,19 @@ fn storage_cmd_to_string(cmd: StorageCommand) {
   }
 }
 
-fn add_no_reply_to_sb(sb: sb.StringBuilder, no_reply: Bool) -> sb.StringBuilder {
+fn add_no_reply_to_st(st: st.StringTree, no_reply: Bool) -> st.StringTree {
   case no_reply {
-    True -> sb.append(sb, " noreply")
-    False -> sb
+    True -> st.append(st, " noreply")
+    False -> st
   }
 }
 
-fn convert_text_command_to_bb(cmd: TextCommand, no_reply: Bool) -> BytesBuilder {
+fn convert_text_command_to_bt(cmd: TextCommand, no_reply: Bool) -> BytesTree {
   case cmd {
     StorageCommand(cmd, key, flags, exptime, size, data) ->
       storage_cmd_to_string(cmd)
-      |> sb.from_string()
-      |> sb.append(string.join(
+      |> st.from_string()
+      |> st.append(string.join(
         [
           // add a space after the command
           "",
@@ -149,60 +147,60 @@ fn convert_text_command_to_bb(cmd: TextCommand, no_reply: Bool) -> BytesBuilder 
         ],
         " ",
       ))
-      |> sb.append(" " <> int.to_string(size))
-      |> sb.append(case cmd {
+      |> st.append(" " <> int.to_string(size))
+      |> st.append(case cmd {
         Cas(cas) -> " " <> int.to_string(cas)
         _ -> ""
       })
-      |> add_no_reply_to_sb(no_reply)
-      |> sb.append("\r\n")
-      |> from_sb()
+      |> add_no_reply_to_st(no_reply)
+      |> st.append("\r\n")
+      |> from_st()
       |> append(data)
       |> append(<<"\r\n">>)
 
     Get(keys) | Gets(keys) ->
-      sb.from_string(case cmd {
+      st.from_string(case cmd {
         Get(_) -> "get "
         Gets(_) -> "gets "
         _ -> panic as "unreachable"
       })
-      |> sb.append(string.join(keys, " "))
-      |> sb.append("\r\n")
-      |> from_sb()
+      |> st.append(string.join(keys, " "))
+      |> st.append("\r\n")
+      |> from_st()
 
     Delete(key) ->
-      sb.from_string("delete " <> key)
-      |> add_no_reply_to_sb(no_reply)
-      |> sb.append("\r\n")
-      |> from_sb()
+      st.from_string("delete " <> key)
+      |> add_no_reply_to_st(no_reply)
+      |> st.append("\r\n")
+      |> from_st()
 
     Incr(key, value) | Decr(key, value) ->
-      sb.from_string(case cmd {
+      st.from_string(case cmd {
         Incr(..) -> "incr "
         Decr(..) -> "decr "
         _ -> panic as "unreachable"
       })
-      |> sb.append(key <> " " <> int.to_string(value))
-      |> add_no_reply_to_sb(no_reply)
-      |> sb.append("\r\n")
-      |> from_sb()
+      |> st.append(key <> " " <> int.to_string(value))
+      |> add_no_reply_to_st(no_reply)
+      |> st.append("\r\n")
+      |> from_st()
 
     Touch(key, exptime) ->
-      sb.from_string("touch " <> key <> " " <> int.to_string(exptime))
-      |> add_no_reply_to_sb(no_reply)
-      |> sb.append("\r\n")
-      |> from_sb()
+      st.from_string("touch " <> key <> " " <> int.to_string(exptime))
+      |> add_no_reply_to_st(no_reply)
+      |> st.append("\r\n")
+      |> from_st()
 
     GetAndTouch(exptime, keys) | GetAndTouchs(exptime, keys) ->
-      sb.from_string(case cmd {
+      st.from_string(case cmd {
         GetAndTouch(..) -> "gat "
         GetAndTouchs(..) -> "gats "
         _ -> panic as "unreachable"
       })
-      |> sb.append(int.to_string(exptime) <> " ")
-      |> sb.append(string.join(keys, " "))
-      |> sb.append("\r\n")
-      |> from_sb()
+      |> st.append(int.to_string(exptime) <> " ")
+      |> st.append(string.join(keys, " "))
+      |> st.append("\r\n")
+      |> from_st()
   }
 }
 
@@ -373,7 +371,7 @@ pub fn run_text_command(
   no_reply: Bool,
 ) -> Result(TextResponse, MemcachedError) {
   let assert Ok(_) =
-    convert_text_command_to_bb(cmd, no_reply)
+    convert_text_command_to_bt(cmd, no_reply)
     |> mug.send_builder(mem.socket, _)
 
   case no_reply {
