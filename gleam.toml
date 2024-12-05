@@ -1,5 +1,5 @@
 name = "glemcached"
-version = "0.1.0"
+version = "0.1.1"
 description = "A memcached client in pure gleam!"
 licenses = ["MIT"]
 repository = { type = "github", user = "arnu515", repo = "glemcached" }
