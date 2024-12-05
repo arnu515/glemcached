@@ -99,10 +99,12 @@ fn authenticate(mem: Memcached, user: String, pass: String) -> Bool {
 /// ```
 pub fn connect(opts: ConnectionOptions) -> Result(Memcached, ConnectionError) {
   let ConnectionOptions(host, port, timeout, username, password) = opts
-  let assert Ok(socket) =
+  let conn =
     mug.new(host, port)
     |> mug.timeout(timeout)
     |> mug.connect()
+    |> result.map_error(ConnectError)
+  use socket <- result.try(conn)
 
   let mem = Memcached(socket, timeout)
   use auth_required <- result.try(check_auth(mem))
