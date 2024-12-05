@@ -4,9 +4,18 @@ import gleeunit/should
 import glemcached
 import glemcached/internal/text.{Value} as _
 import glemcached/text
+import mug
 
 pub fn main() {
   gleeunit.main()
+}
+
+pub fn fails_to_connect_test() {
+  // nothing should be running on this port!
+  glemcached.new("localhost", 11_213)
+  |> glemcached.connect()
+  |> should.be_error()
+  |> should.equal(glemcached.ConnectError(mug.Econnrefused))
 }
 
 pub fn auth_test() {
